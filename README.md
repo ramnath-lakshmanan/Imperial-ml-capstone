@@ -10,6 +10,14 @@ The high-level idea is model → decide → observe → update. I fit a cheap su
 
 This capstone supports the career move into applied ML: limited data, no closed-form objective, and a need to justify decisions to someone who was not at the keyboard.
 
+## Documentation
+
+
+
+- [Dataset datasheet](docs/DATASHEET.md)
+
+- [Optimiser model card](docs/MODEL_CARD.md)
+
 Section 2 — Inputs and outputs
 
 What the hidden function receives
