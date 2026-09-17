@@ -1,227 +1,77 @@
-# Datasheet: Imperial PCMLAI BBO capstone query log
+# Datasheet — BBO query log (Weeks 1–13)
 
+Framework: Gebru et al., *Datasheets for Datasets*.
 
+## Motivation
 
-**Dataset name:** BBO weekly query-and-response log  
+- **Why created:** To record every portal query and oracle score for eight hidden functions in the Imperial PCMLAI BBO capstone.
+- **Who created it:** The learner, from course starter `.npy` files plus weekly portal emails.
+- **Funding:** Coursework only.
 
-**Owner:** course learner (Imperial-ml-capstone)  
+## Composition
 
-**Version:** 1.0 (Weeks 1–9; Week 10 in progress)  
+- **Instances:** Starter points from the course (count varies by function) plus 13 weekly queries per function (104 weekly `(x, y)` pairs).
+- **What each instance is:** A point `x` in the unit box `[0, 1]^d` and a scalar `y` from the hidden oracle.
+- **Dimensions:** F1–F2: 2; F3: 3; F4–F5: 4; F6: 5; F7: 6; F8: 8.
+- **Sensitive attributes:** None.
+- **Missing values:** None in the weekly log. Some `y` values are numerically a floor (Function 1).
+- **Recommended split:** There is no train/test split. The log is the entire optimisation history.
 
-**Last updated:** 2026-09-16  
+### Best y after Week 13
 
-**Format:** per-week Markdown in `submissions/` plus arrays in `notebooks/capstone_bbo.ipynb`
+| Fn | Best y | Week of best | Week 13 y |
+| --- | --- | --- | --- |
+| 1 | 4.58e-13 | 2 | -8.26e-103 |
+| 2 | 0.723 | 5 | 0.490 |
+| 3 | -0.0057 | 11 | -0.044 |
+| 4 | 0.612 | 11 | 0.493 |
+| 5 | 5798 | 13 | 5798 |
+| 6 | -0.162 | 7 | -0.341 |
+| 7 | 2.686 | 13 | 2.686 |
+| 8 | 9.997 | 13 | 9.997 |
 
+### Week 13 query (portal email)
 
+| Fn | x |
+| --- | --- |
+| 1 | [0.063374, 0.552641] |
+| 2 | [0.704815, 0.000001] |
+| 3 | [0.987911, 0.199775, 0.408049] |
+| 4 | [0.405339, 0.384696, 0.406659, 0.417614] |
+| 5 | [0.770715, 0.999999, 0.999999, 0.999999] |
+| 6 | [0.518112, 0.444066, 0.631339, 0.755503, 0.127365] |
+| 7 | [0.090784, 0.000001, 0.340448, 0.237765, 0.349169, 0.647671] |
+| 8 | [0.120179, 0.164217, 0.152878, 0.157702, 0.799478, 0.509155, 0.202802, 0.621526] |
 
-This datasheet follows Gebru et al., *Datasheets for Datasets*.
+Earlier weekly `x` and `y` are stored in `submissions/` and in the proposer notebook.
 
+## Collection
 
+- **How:** Course portal. One vector per function per week. `y` returned by email.
+- **Timeframe:** 13 weekly rounds.
+- **Who collected it:** The learner.
+- **Collection bias:** Queries were **adaptive**. Later points cluster near personal bests (Function 5 on the high face; Function 2 on a ridge). This is not a uniform sample of the cube.
+- **Ethical review:** Not required. No people in the data.
 
-## 1. Motivation
+## Preprocessing
 
+- Inputs clipped to `(1e-6, 1-1e-6)` so the portal would accept the string.
+- No imputation. No label transformation except GP `normalize_y=True` at fit time.
+- Starter `.npy` files stay on the local machine (course data, not republished here).
 
+## Uses
 
-**Why this set exists.**  
+- **Intended:** Reproduce the 13-week search and the GP-UCB policy.
+- **Not intended:** Claiming a known global maximum. Function 5 was still rising at 5798; other learners report higher values on the same box.
+- **Impact if misused:** Low. Synthetic course oracles only.
 
-The Imperial Black-Box Optimisation challenge hides eight scalar functions. Each week the portal accepts one input vector per function and returns one `y`. The log exists so every later query can use the full history, and so a reviewer can see what was tried.
+## Distribution
 
+- Query log and documentation: this public repo.
+- Starter `.npy`: course materials only. Not hosted on GitHub.
 
+## Maintenance
 
-**Task it supports.**  
-
-Sequential maximisation of eight unknown functions on `[0, 1]^d` with one evaluation per function per week.
-
-
-
-**Who created it.**  
-
-The learner. Starter `(x, y)` files were issued by the course. Weekly `y` values come from the official oracle email.
-
-
-
-**Funding.**  
-
-None beyond the professional-certificate programme.
-
-
-
-## 2. Composition
-
-
-
-**What is in it.**
-
-
-
-| Source | Contents |
-
-|---|---|
-
-| Course starter | `initial_inputs.npy`, `initial_outputs.npy` for functions 1–8 |
-
-| Weeks 1–9 | eight `x` vectors and eight scalar `y` values per week |
-
-| Derived | personal-best table, anchors used by the proposer |
-
-
-
-**Dimensionality.**  
-
-F1–F2: 2-D. F3: 3-D. F4–F5: 4-D. F6: 5-D. F7: 6-D. F8: 8-D.
-
-
-
-**Size (after Week 9).**  
-
-Starter design (about 10 points per function, course-issued) plus 9 weekly points → about 19 labelled pairs per function. Not a large public corpus.
-
-
-
-**Format.**  
-
-Inputs are real numbers in `(0, 1]`. Portal strings use six decimal places, hyphen-separated (`0.123456-0.654321`). Outputs are floats; F1 is near machine zero except one Week-2 spike; F5 is in the thousands.
-
-
-
-**Best observed `y` after Week 9.**
-
-
-
-| Function | Best y | Week of best |
-
-|---|---|---|
-
-| 1 | 4.58e-13 | 2 |
-
-| 2 | 0.723 | 5 |
-
-| 3 | −0.0062 | 9 |
-
-| 4 | 0.610 | 4 |
-
-| 5 | 4520 | 9 |
-
-| 6 | −0.162 | 7 |
-
-| 7 | 2.329 | 7 |
-
-| 8 | 9.963 | 5 |
-
-
-
-**Gaps.**  
-
-- F1 is almost all floor values.  
-
-- Later weeks cluster on F5’s `x2=x3=x4≈1` face and F2’s `x1≈0.71` strip.  
-
-- Large regions of F7 and F8 are unsampled.  
-
-- Course starter files are **not** in the public repo (binary course data).
-
-
-
-**Sensitive data.**  
-
-None. No people, no text, no identifiers.
-
-
-
-**Errors / noise.**  
-
-Oracle `y` is treated as exact. Portal format errors (wrong decimals) were rejected and corrected; those rejected strings are not part of the labelled set.
-
-
-
-## 3. Collection process
-
-
-
-**How queries were generated.**  
-
-Gaussian Process (Matérn-5/2) + UCB, with a local cloud around the current personal best. Week 3 added a soft-margin SVM high/low filter. Week 4 added a small MLP only as a gradient hint. From Week 5 the policy was: if `y` falls, snap the next centre back to the stored best.
-
-
-
-**Time frame.**  
-
-One official round per week across the capstone calendar (Weeks 1–9 collected; Week 10 next).
-
-
-
-**Who was involved.**  
-
-The learner chose `x`. The course oracle returned `y`. No crowd workers.
-
-
-
-**Sampling strategy.**  
-
-Not i.i.d. Adaptive, exploit-heavy after a feature is found. That is a **collection bias**, not a bug.
-
-
-
-## 4. Preprocessing and uses
-
-
-
-**Transforms.**  
-
-`StandardScaler` on `x` before the GP. `normalize_y=True` in sklearn. Inputs clipped to `[1e-6, 1-1e-6]` and printed to six decimals. No other cleaning.
-
-
-
-**Intended uses.**  
-
-- Reproducing this capstone trace.  
-
-- Teaching sequential design / Bayesian optimisation.  
-
-- Comparing a new acquisition rule on the *same* history (offline).
-
-
-
-**Inappropriate uses.**  
-
-- Training a general LLM or image model.  
-
-- Claiming a global optimum for any function.  
-
-- Publishing the course starter `.npy` if the programme forbids redistribution.  
-
-- Mixing F5’s scale with F1’s zeros in one un-normalised model.
-
-
-
-## 5. Distribution and maintenance
-
-
-
-**Where.**  
-
-Public GitHub repo `Imperial-ml-capstone`, folders `submissions/` and `notebooks/`. Starter `.npy` stay on the local machine (`Downloads\Initial_data_points_starter (2)\initial_data`).
-
-
-
-**Terms.**  
-
-Weekly `(x, y)` logged by the learner may be shown for assessment. Course starter files remain course property.
-
-
-
-**Maintainer.**  
-
-The learner. Each new portal email appends one row per function to `submissions/weekNN.md` and to the notebook dictionaries.
-
-
-
-**Retention.**  
-
-Keep until the programme ends, then as a portfolio artefact.
-
-
-
-**Citation.**  
-
-This repository plus Gebru et al. (2021), Datasheets for Datasets.
+- Owner: repo author.
+- No planned updates after Week 13 unless the programme asks for a correction.
+- Errata: discussion-board strings sometimes used a planned fallback sample; the emails above are the source of truth for `y`.
