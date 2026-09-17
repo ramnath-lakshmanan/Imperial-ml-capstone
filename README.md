@@ -1,68 +1,50 @@
-Imperial College / Emeritus — Professional Certificate in Machine Learning and AI.
+# Imperial PCMLAI — Black-Box Optimisation Capstone
 
-Section 1 — Project overview
+Public repo for the 13-week BBO challenge: one query per week on eight hidden functions.
 
-This project is a sequential maximisation challenge on eight hidden functions (2D to 8D). Each function starts with a small initial design. I may submit one new input per function per week. The formula, gradients and plots of the true surface are never shown.
+**Repository:** https://github.com/ramnath-lakshmanan/Imperial-ml-capstone
 
-The goal is not a perfect global max. It is to improve the best observed y under a tight evaluation budget and to keep a clear record of why each query was chosen. That matches real ML work: hyperparameter search, simulator tuning, lab experiments and any API that returns a score but not a derivative.
+## For a general reader (about 100 words)
 
-The high-level idea is model → decide → observe → update. I fit a cheap surrogate on the points I already have, pick the next x, wait for the portal y, then revise the search.
+This project is a 13-week search for good settings on eight hidden tests. Each week the course only returns a score. There is no formula. I fitted a simple statistical map of the scores so far, then picked the next setting near the best point I already had. If a new score was worse, I went back to the old best instead of chasing a bad week. The clear gain was Function 5, which rose from about 4,440 to 5,798 by keeping three inputs at 1 and only moving the first input. Some other tests barely moved. The lesson is: when tests are expensive, write down what worked and do not throw it away after one poor result.
 
-This capstone supports the career move into applied ML: limited data, no closed-form objective, and a need to justify decisions to someone who was not at the keyboard.
+## What is in this repo
 
-## Documentation
+| Path | What it is |
+| --- | --- |
+| `docs/DATASHEET.md` | Dataset context (Gebru-style) |
+| `docs/MODEL_CARD.md` | Optimiser card (Mitchell-style) |
+| `docs/BBO_Capstone_Presentation.pdf` | Short presentation of the method |
+| `notebooks/bbo_proposer.ipynb` | Weekly GP-UCB proposer cell |
+| `submissions/` | Week-by-week portal strings and oracle y |
+| `LICENSE` | Licence for the code in this repo |
 
+Starter `.npy` files from the course are **not** uploaded (course data). Describe them in the datasheet and keep them local.
 
+## Method in one paragraph
 
-- [Dataset datasheet](docs/DATASHEET.md)
+Each function has its own Gaussian Process (Matérn-5/2 + white noise). Candidates are scored with UCB = mean + kappa * std around a personal-best anchor. Portal format: six decimals, values in (0, 1), hyphen-separated.
 
-- [Optimiser model card](docs/MODEL_CARD.md)
+## Best observed y after Week 13
 
-Section 2 — Inputs and outputs
+| Function | Best y | Week | Note |
+| --- | --- | --- | --- |
+| 1 | 4.58e-13 | 2 | Floor |
+| 2 | 0.723 | 5 | Ridge; later weeks off-ridge were worse |
+| 3 | -0.0057 | 11 | Week 13 dropped |
+| 4 | 0.612 | 11 | Week 13 dropped |
+| 5 | **5798** | 13 | High face; first input walked upward |
+| 6 | -0.162 | 7 | Later weeks worse |
+| 7 | **2.686** | 13 | Late local gain |
+| 8 | **9.997** | 13 | Almost flat near 9.99 |
 
-What the hidden function receives
+## How to run
 
-A vector x in the unit cube [0, 1]^d.
+1. Unzip the course starter data locally.
+2. Open `notebooks/bbo_proposer.ipynb`.
+3. Set `base` to your local `initial_data` folder.
+4. Run the cell. Paste the eight printed strings into the portal.
 
-Function	Dimension	Starter n
-1,2	           2	                10
-3	           3	                15
-4,5	           4	                30/20
-6	           5	                20
-7	           6	                30
-8	           8	                40
+## Licence
 
-Portal format (six decimal places, hyphen, each piece starts with 0.):
-
-Example 3D :
-
-0.040729-0.915411-0.504944
-What it returns
-
-One scalar y. I maximise y. Scales differ a lot (F1 near 0, F5 in the thousands, F8 near 10), so each function is modelled on its own. I never mix the eight y columns.
-
-What my code receives / returns
-
-Receives the growing (X, y) history. Returns one new x string per function.
-
-Section 3 — Challenge objectives
-
-•  Raise the best y on each of the eight oracles.
-
-•  One query per function per week; results arrive after the portal processes the batch.
-
-•  Structure unknown: peaks, flats, ridges, possible noise.
-
-•  Success is a thoughtful trail (explore vs exploit, what the last y taught) as well as the number itself.
-
-Limits: no extra evaluations, no look at the formula, coordinates must stay in (0, 1) at six decimals.
-
-Section 4 — Technical approach (Weeks 1–3)
-
-Week 1. Gaussian Process (Matérn-5/2, inputs standardised, y normalised) + UCB. High kappa, global candidates. Seven of eight functions beat the starter best. F1 stayed flat (y ≈ 0).
-
-Week 2. Same GP. Lower kappa and a local cloud around last week’s point on the winners. Linear and logistic checks used only as direction hints (F2 ridge near x1 ≈ 0.7; F5 high x2–x4). Results: F2, F4, F5, F8 improved (F4 first became positive; F5 2831 → 4442). F3, F6, F7 got worse. F1 first showed a faint signal (4.6e-13 at about [0.52, 0.33]).
-
-Week 3. GP-UCB still picks the point. A soft-margin RBF SVM labels high vs low (y ≥ median) and gives a small bonus to “high” candidates. Losers are pulled back toward their personal best; winners stay local. F5 continues toward the (x2,x3,x4) ≈ 1 corner.
-
-Exploration vs exploitation. Week 1 explore. Weeks 2–3 exploit where y rose, keep exploring F1 until the spike is clear. Unique part of the workflow: do not delete a bad point; use it so the SVM learns the low region. One model per function; never compare raw y across functions.
+See `LICENSE`. Course starter data remains the programme’s material.
