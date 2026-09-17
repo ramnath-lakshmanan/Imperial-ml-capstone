@@ -21,6 +21,18 @@ This project is a 13-week search for good settings on eight hidden tests. Each w
 
 Starter `.npy` files from the course are **not** uploaded (course data). Describe them in the datasheet and keep them local.
 
+## Notebook
+
+
+
+The working proposer is the **last code cell** in
+
+[bbo_proposer.ipynb](docs/bbo_proposer.ipynb)
+
+(full W1-W13 history, eight portal strings).
+
+[bbo_proposer.ipynb](notebooks/bbo_proposer.ipynb)
+
 ## Method in one paragraph
 
 Each function has its own Gaussian Process (Matérn-5/2 + white noise). Candidates are scored with UCB = mean + kappa * std around a personal-best anchor. Portal format: six decimals, values in (0, 1), hyphen-separated.
