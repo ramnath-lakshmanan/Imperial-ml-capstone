@@ -1,175 +1,62 @@
-# Model card: GP-UCB personal-best proposer
+# Model card — GP-UCB proposer (Weeks 1–13)
 
+Framework: Mitchell et al., *Model Cards for Model Reporting*.
 
+## Model details
 
-**Name:** GP-UCB + personal-best anchor  
+- **Name:** Weekly GP-UCB proposer for eight hidden functions.
+- **Type:** Gaussian Process regression + Upper Confidence Bound, one model per function.
+- **Kernel:** ConstantKernel × Matérn-5/2 + WhiteKernel.
+- **Inputs:** Scaled with `StandardScaler`. `normalize_y=True`.
+- **Acquisition:** UCB = mu + kappa * std. Kappa, local radius and min-distance are set per function.
+- **Policy:** Personal-best anchor. If last `y` is worse than the stored best, the next cloud is centred on the stored best (snap-back).
+- **Framework:** scikit-learn, NumPy, Jupyter.
+- **Licence:** See repo `LICENSE`. Course data is not included.
 
-**Type:** Sequential black-box optimiser (surrogate + acquisition)  
+## Intended use
 
-**Version:** 1.9 (policy used for Week 10)  
+- **Primary:** Propose one in-box point per function per week in the Imperial BBO portal.
+- **Out of scope:** Production hyperparameter search without a new study; claiming a certified global max.
 
-**Framework:** NumPy, scikit-learn (`GaussianProcessRegressor`, optional `SVC`, `MLPRegressor`)  
+## Factors and limitations
 
-**Date:** 2026-09-16  
+- Sample size is small (starter points + 13 queries). Length-scale fits can warn; those warnings were treated as harmless.
+- Adaptive sampling biases the GP toward visited clusters.
+- Function 1 never left a numerical floor. Function 8 is almost flat near 9.99.
+- Portal format (six decimals, open unit interval) constrains the output of `fmt()`.
 
+## Metrics / performance
 
+Best observed oracle `y` after Week 13:
 
-This card follows Mitchell et al., *Model Cards for Model Reporting*.
+| Fn | Best y | Week | Week 13 y |
+| --- | --- | --- | --- |
+| 1 | 4.58e-13 | 2 | ~0 |
+| 2 | 0.723 | 5 | 0.490 |
+| 3 | -0.0057 | 11 | -0.044 |
+| 4 | 0.612 | 11 | 0.493 |
+| 5 | **5798** | 13 | 5798 |
+| 6 | -0.162 | 7 | -0.341 |
+| 7 | **2.686** | 13 | 2.686 |
+| 8 | **9.997** | 13 | 9.997 |
 
+What worked: locking Function 5 at `x2=x3=x4 ≈ 1` and raising `x1` (0.12 to 0.77).  
+What failed: leaving Function 2’s ridge (`x2 ≈ 0.01`).
 
+## Evaluation data
 
-## 1. Overview
+The evaluation *is* the oracle. There is no held-out test set. Each week is one expensive evaluation.
 
+## Ethical considerations
 
+No personal data. No deployment risk beyond a course leaderboard. Transparency artefacts are this card, the datasheet, and the public notebook.
 
-Each of the eight hidden functions has its own GP. The next query maximises
+## Assumptions
 
+- The hidden maps are stable across weeks.
+- A ridge or face that raised `y` is worth pinning.
+- One query per week is too few for a high-kappa search after a feature is known.
 
+## Caveats
 
-UCB(x) = mu(x) + kappa * sigma(x)
-
-
-
-among candidates drawn in a Gaussian cloud around the personal-best `x`, after rejecting points closer than `min_dist` to an already evaluated row.
-
-
-
-It is **not** a neural language model. LLM ideas (temperature, few-shot, format constraints) were only used as analogies in later discussion posts.
-
-
-
-## 2. Intended use
-
-
-
-**Suitable for.**  
-
-Low-dimensional, expensive, derivative-free maximisation with a handful of evaluations (here: one shot per week).
-
-
-
-**Avoid.**  
-
-High-dimensional search, images, text, safety-critical control without extra validation, or treating the GP mean as the true function.
-
-
-
-## 3. Details across ten rounds
-
-
-
-| Weeks | What changed |
-
-|---|---|
-
-| 1 | GP + UCB, Latin-style candidates |
-
-| 2 | Local cloud around first improvements |
-
-| 3 | Soft-margin RBF SVM as high/low region filter |
-
-| 4 | Tiny MLP (16-8) as a finite-difference hint only |
-
-| 5–9 | Per-function kappa; **snap back** if y drops |
-
-| 10 | Same rule: exploit F5 face and F3 new best; restore F2/F4/F6/F7/F8/F1 anchors |
-
-
-
-Hyperparameters that actually move the portal string: `kappa`, local radius, `min_dist`. Kernel length-scales are fitted by sklearn.
-
-
-
-## 4. Performance
-
-
-
-Metric: **personal-best y** (higher is better). Not accuracy.
-
-
-
-| Fn | Best y | Comment |
-
-|---|---|---|
-
-| 1 | 4.58e-13 | Still essentially a floor |
-
-| 2 | 0.723 | Ridge at x1≈0.71, x2≈0.01; later weeks left it and fell |
-
-| 3 | −0.006 | New best in Week 9 |
-
-| 4 | 0.610 | Week 4 pocket; later local steps weaker |
-
-| 5 | 4520 | Clear scaling on x2=x3=x4≈1 while raising x1 |
-
-| 6 | −0.162 | Week 7 best |
-
-| 7 | 2.329 | Week 7 best |
-
-| 8 | 9.963 | Small gains then flat |
-
-
-
-F5 is the success case for the policy. F2 is the warning case: leaving a known feature looks like exploration and reduces y.
-
-
-
-## 5. Assumptions and limitations
-
-
-
-**Assumptions.**  
-
-- Local smoothness near the current best (Matérn-5/2).  
-
-- One mode worth exploiting once a feature is found.  
-
-- Course box is `[0, 1]^d` and maximisation.
-
-
-
-**Failure modes.**  
-
-- Thin spike far from all samples (likely F1).  
-
-- Narrow ridge: a 0.02 move in x1 kills F2.  
-
-- GP length-scale hitting the upper bound (over-smooth).  
-
-- Overfitting a 16–8 net if it were used as the only surrogate.
-
-
-
-**Compute.**  
-
-One sklearn fit per function on a laptop CPU. No GPU.
-
-
-
-## 6. Ethical considerations and transparency
-
-
-
-No personal data. Risk is scientific, not social: over-claiming a global max.
-
-
-
-Transparency is the mitigation:
-
-
-
-- Every weekly `x` and `y` lives in `submissions/`.  
-
-- The proposer cell is in `notebooks/`.  
-
-- This card and the datasheet state the snap-back rule in words.  
-
-- A second researcher can refit the GP if they have the starter `.npy` files.
-
-
-
-Reproducibility is limited by the hidden oracle: nobody else can query the live functions. They can reproduce *this trace* and the next proposed `x` given the same history.
-
-
-
-Adding more plots would help a hiring manager; it would not change the decision rule. The current structure is enough for assessment.
+Week 13 Function 5 at 5798 is a personal best, not a proven global maximum. A peer reported 7044 on the same function. Function 2’s Week-13 return to the ridge recovered only to 0.490, not 0.723.
